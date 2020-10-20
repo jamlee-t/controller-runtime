@@ -92,6 +92,11 @@ type OwnsInput struct {
 	predicates []predicate.Predicate
 }
 
+// NOTE(JamLee): 注册controller到manager。
+//  For：监控的资源。相当于调用Watches(&source.Kind{Type: apiType},&handler.EnqueueRequestForObject{})
+//  Owns：拥有的下属资源，如果corev1.Pod{}资源属于api.ChaosPod{}，也将会被监控，相当于调用Watches(&source.Kind{Type: <ForType-apiType>}, &handler.EnqueueRequestForOwner{OwnerType: apiType, IsController: true})
+//  reconciler结构体：继承Reconciler，需要实现该结构体和Reconcile方法。mgr.GetClient()、mgr.GetScheme()是客户端和Scheme，这在前面已经创建好了
+
 // Owns defines types of Objects being *generated* by the ControllerManagedBy, and configures the ControllerManagedBy to respond to
 // create / delete / update events by *reconciling the owner object*.  This is the equivalent of calling
 // Watches(&source.Kind{Type: <ForType-forInput>}, &handler.EnqueueRequestForOwner{OwnerType: apiType, IsController: true})

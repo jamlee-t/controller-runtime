@@ -12,7 +12,8 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
-	github.com/onsi/ginkgo v1.12.1
+	github.com/nxadm/tail v1.4.5 // indirect
+	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.1
 	github.com/prometheus/client_golang v1.0.0
 	github.com/prometheus/client_model v0.2.0
@@ -20,6 +21,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/zap v1.10.0
+	golang.org/x/sys v0.0.0-20201018230417-eeed37f84f13 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 	gomodules.xyz/jsonpatch/v2 v2.0.1

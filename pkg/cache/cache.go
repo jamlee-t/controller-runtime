@@ -65,10 +65,12 @@ type Informers interface {
 	// WaitForCacheSync waits for all the caches to sync.  Returns false if it could not sync a cache.
 	WaitForCacheSync(stop <-chan struct{}) bool
 
+	// NOTE(JamLee): caches 和 informer 难道指的都是 informer
 	// Informers knows how to add indices to the caches (informers) that it manages.
 	client.FieldIndexer
 }
 
+// NOTE(JamLee): 对 client-go 的 informer 又包了一层 informer
 // Informer - informer allows you interact with the underlying informer
 type Informer interface {
 	// AddEventHandler adds an event handler to the shared informer using the shared informer's resync
@@ -94,6 +96,7 @@ type Options struct {
 	// Mapper is the RESTMapper to use for mapping GroupVersionKinds to Resources
 	Mapper meta.RESTMapper
 
+	// NOTE(JamLee): 防止同时执行 list 请求
 	// Resync is the base frequency the informers are resynced.
 	// Defaults to defaultResyncTime.
 	// A 10 percent jitter will be added to the Resync period between informers
@@ -107,6 +110,8 @@ type Options struct {
 
 var defaultResyncTime = 10 * time.Hour
 
+// NOTE(JamLee): newCache 就是用的本方法。本质上说就是管理一系列 Informer 的管理器。类型是 informerCache。能够做到读从 Informer缓存
+//  中读
 // New initializes and returns a new Cache.
 func New(config *rest.Config, opts Options) (Cache, error) {
 	opts, err := defaultOpts(config, opts)

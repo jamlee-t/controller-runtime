@@ -48,6 +48,7 @@ type clientCache struct {
 	mu             sync.RWMutex
 }
 
+// NOTE(JamLee): 根据 groupVersion 创建出来 Resource, 这里的 Resource其实就是 RestClient
 // newResource maps obj to a Kubernetes Resource and constructs a client for that Resource.
 // If the object is a list, the resource represents the item's type instead.
 func (c *clientCache) newResource(gvk schema.GroupVersionKind, isList bool) (*resourceMeta, error) {
@@ -56,14 +57,18 @@ func (c *clientCache) newResource(gvk schema.GroupVersionKind, isList bool) (*re
 		gvk.Kind = gvk.Kind[:len(gvk.Kind)-4]
 	}
 
+	// NOTE(JamLee): 创建真正的 restclient, 在这里应该能知道是如何访问 kube-apiserver
 	client, err := apiutil.RESTClientForGVK(gvk, c.config, c.codecs)
 	if err != nil {
 		return nil, err
 	}
+	// NOTE(JamLee): gvk 的 Kind 和 Version 映射起来。其实就是 GVK 和 GVR 的转换。为什么不直接把 kind 首字母变小呢？
 	mapping, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		return nil, err
 	}
+
+	// NOTE(JamLee): client 直接复制了嵌入值
 	return &resourceMeta{Interface: client, mapping: mapping, gvk: gvk}, nil
 }
 
@@ -96,8 +101,10 @@ func (c *clientCache) getResource(obj runtime.Object) (*resourceMeta, error) {
 	return r, err
 }
 
+// NOTE(JamLee): getObjMeta 会得到一个对象。包含 type and object 信息
 // getObjMeta returns objMeta containing both type and object metadata and state
 func (c *clientCache) getObjMeta(obj runtime.Object) (*objMeta, error) {
+	// NOTE(JamLee): 这里会获得 rest 对象
 	r, err := c.getResource(obj)
 	if err != nil {
 		return nil, err
@@ -111,6 +118,7 @@ func (c *clientCache) getObjMeta(obj runtime.Object) (*objMeta, error) {
 
 // resourceMeta caches state for a Kubernetes type.
 type resourceMeta struct {
+	// NOTE(JamLee): client-go 中 RESTClient 的结构体对应的
 	// client is the rest client used to talk to the apiserver
 	rest.Interface
 	// gvk is the GroupVersionKind of the resourceMeta
@@ -136,5 +144,6 @@ type objMeta struct {
 	*resourceMeta
 
 	// Object contains meta data for the object instance
+	// NOTE(JamLee): metadata 其实还有一个 metav1.Type 中包含 apiVersion 和 Kind
 	metav1.Object
 }

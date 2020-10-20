@@ -100,6 +100,8 @@ type StatusWriter interface {
 	Patch(ctx context.Context, obj runtime.Object, patch Patch, opts ...PatchOption) error
 }
 
+// NOTE(JamLee): client 的接口定义， 这里和 client-go 没有关系吗？
+//  答案是没有关系， 这里用于定义 controller runtime 的 client 的接口。有两种实现
 // Client knows how to perform CRUD operations on Kubernetes objects.
 type Client interface {
 	Reader

@@ -99,6 +99,7 @@ func NewUnmanaged(name string, mgr manager.Manager, options Options) (Controller
 		options.RateLimiter = workqueue.DefaultControllerRateLimiter()
 	}
 
+	// 日志从 mgr 中获取，那么这里是应该可以定义一个全局的 log
 	if options.Log == nil {
 		options.Log = mgr.GetLogger()
 	}

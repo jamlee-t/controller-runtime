@@ -33,7 +33,9 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
+// NOTE(JamLee): Describe 将测试进行归类
 var _ = Describe("Source", func() {
+	// NOTE(JamLee): Describe 将测试进行子类归类
 	Describe("Kind", func() {
 		var c chan struct{}
 		var p *corev1.Pod

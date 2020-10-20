@@ -62,20 +62,24 @@ func New(config *rest.Config, options Options) (Client, error) {
 	// Init a Mapper if none provided
 	if options.Mapper == nil {
 		var err error
+		// NOTE(JamLee): Mapper中 GroupVersionKind 就是apiVersion + Kind 内容的另一种形式
 		options.Mapper, err = apiutil.NewDynamicRESTMapper(config)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	// QUESTION(JamLee): 为什么 controller runtime 自己搞一个 clientcache ?
 	clientcache := &clientCache{
-		config:         config,
-		scheme:         options.Scheme,
+		config: config,
+		scheme: options.Scheme,
+		// NOTE(JamLee): Mapper 本身有什么用吗, 没看到其实现类？
 		mapper:         options.Mapper,
 		codecs:         serializer.NewCodecFactory(options.Scheme),
 		resourceByType: make(map[schema.GroupVersionKind]*resourceMeta),
 	}
 
+	// NOTE(JamLee): client 区分为 typedClient 和 unstructuredClient client
 	c := &client{
 		typedClient: typedClient{
 			cache:      clientcache,

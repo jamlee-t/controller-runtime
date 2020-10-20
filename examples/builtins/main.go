@@ -30,7 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 var log = logf.Log.WithName("example-controller")
@@ -47,6 +46,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// NOTE(JamLee): controller 本来可以自己实现的，内置有一个可以通过配置参数就建立一个 controller
 	// Setup a new controller to reconcile ReplicaSets
 	entryLog.Info("Setting up controller")
 	c, err := controller.New("foo-controller", mgr, controller.Options{
@@ -57,12 +57,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Watch ReplicaSets and enqueue ReplicaSet object key
+	// NOTE(JamLee): 给这个 controller 添加 Watch 的, 这里mgr没有启动，所以不会将 source 启动，仅仅是添加到数组里，这里我会有几个疑问
+	//  1. 可以多次watch不同的资源吗？应该是可以的，后面的参数传入了不同的 handler
+	//  Watch ReplicaSets and enqueue ReplicaSet object key
 	if err := c.Watch(&source.Kind{Type: &appsv1.ReplicaSet{}}, &handler.EnqueueRequestForObject{}); err != nil {
 		entryLog.Error(err, "unable to watch ReplicaSets")
 		os.Exit(1)
 	}
 
+	// NOTE(JamLee): EnqueueRequestForOwner 和  EnqueueRequestForObject 是有什么不同呢？
 	// Watch Pods and enqueue owning ReplicaSet key
 	if err := c.Watch(&source.Kind{Type: &corev1.Pod{}},
 		&handler.EnqueueRequestForOwner{OwnerType: &appsv1.ReplicaSet{}, IsController: true}); err != nil {
@@ -72,12 +75,13 @@ func main() {
 
 	// Setup webhooks
 	entryLog.Info("setting up webhook server")
-	hookServer := mgr.GetWebhookServer()
+	//hookServer := mgr.GetWebhookServer()
+	//
+	//entryLog.Info("registering webhooks to the webhook server")
+	//hookServer.Register("/mutate-v1-pod", &webhook.Admission{Handler: &podAnnotator{Client: mgr.GetClient()}})
+	//hookServer.Register("/validate-v1-pod", &webhook.Admission{Handler: &podValidator{Client: mgr.GetClient()}})
 
-	entryLog.Info("registering webhooks to the webhook server")
-	hookServer.Register("/mutate-v1-pod", &webhook.Admission{Handler: &podAnnotator{Client: mgr.GetClient()}})
-	hookServer.Register("/validate-v1-pod", &webhook.Admission{Handler: &podValidator{Client: mgr.GetClient()}})
-
+	// NOTE(JamLee): 最终 mgr 还是会 Start 的。这个时候 controller.Watch 呢？
 	entryLog.Info("starting manager")
 	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
 		entryLog.Error(err, "unable to run manager")

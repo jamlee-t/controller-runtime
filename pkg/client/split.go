@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// NOTE(JamLee): 读取是从 Cache 中读取对象, 写入直接写入到 api server
 // DelegatingClient forms a Client by composing separate reader, writer and
 // statusclient interfaces.  This way, you can have an Client that reads from a
 // cache and writes to the API server.
@@ -32,6 +33,7 @@ type DelegatingClient struct {
 	StatusClient
 }
 
+// NOTE(JamLee): 用于读取结构化和非结构化的数据
 // DelegatingReader forms a Reader that will cause Get and List requests for
 // unstructured types to use the ClientReader while requests for any other type
 // of object with use the CacheReader.  This avoids accidentally caching the

@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+// NOTE(JamLee): 直接从 api server 中读取， 这里的`直接` 含义是什么呢, 是指取值没有缓存吗？client-go 不是有 informer 吗， 这里还写 cache 是？
 // client is a client.Client that reads and writes directly from/to an API server.  It lazily initializes
 // new clients at the time they are used, and caches the client.
 type typedClient struct {

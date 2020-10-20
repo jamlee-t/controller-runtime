@@ -76,6 +76,8 @@ func RESTClientForGVK(gvk schema.GroupVersionKind, baseConfig *rest.Config, code
 	if cfg.NegotiatedSerializer == nil {
 		cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: codecs}
 	}
+
+	// NOTE(JamLee): 创建rest客户端
 	return rest.RESTClientFor(cfg)
 }
 
@@ -83,8 +85,11 @@ func RESTClientForGVK(gvk schema.GroupVersionKind, baseConfig *rest.Config, code
 func createRestConfig(gvk schema.GroupVersionKind, baseConfig *rest.Config) *rest.Config {
 	gv := gvk.GroupVersion()
 
+	// NOTE(JamLee): rest 来自 client-go,
 	cfg := rest.CopyConfig(baseConfig)
 	cfg.GroupVersion = &gv
+
+	// NOTE(JamLee): controller-runtime 自己搞定路径配置
 	if gvk.Group == "" {
 		cfg.APIPath = "/api"
 	} else {

@@ -42,6 +42,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
+// Manager 初始化共享的对象，例如 Caches 和 Client(k8s), 还有日志。功能详细列举如下:
+// 1. 支持多个manager 实例，选主形成高可用
+// 2. Config, Scheme, Client, FieldIndexer, Cache, EventRecord, RESTMapper, APIReader, WebhookServer, Logger
+//
+// 注意
+// SetFields 使用于将实现了 Inject 的结构体的对象注入进来
+
 // Manager initializes shared dependencies such as Caches and Clients, and provides them to Runnables.
 // A Manager is required to create Controllers.
 type Manager interface {
@@ -143,6 +150,7 @@ type Options struct {
 	// starting the manager.
 	LeaderElection bool
 
+	// 选主使用 namespace 中创建 configmap 这种方式，有点新奇哦
 	// LeaderElectionNamespace determines the namespace in which the leader
 	// election configmap will be created.
 	LeaderElectionNamespace string
@@ -166,6 +174,7 @@ type Options struct {
 	// between tries of actions. Default is 2 seconds.
 	RetryPeriod *time.Duration
 
+	// NOTE(JamLee): Mgr 可以控制 所有的 controller 在哪个命名空间名下
 	// Namespace if specified restricts the manager's cache to watch objects in
 	// the desired namespace Defaults to all namespaces
 	//
@@ -189,6 +198,7 @@ type Options struct {
 	// Liveness probe endpoint name, defaults to "healthz"
 	LivenessEndpointName string
 
+	// NOTE(JamLee): Webhook 用于触发调谐执行吗？
 	// Port is the port that the webhook server serves at.
 	// It is used to set webhook.Server.Port.
 	Port int
@@ -196,6 +206,7 @@ type Options struct {
 	// It is used to set webhook.Server.Host.
 	Host string
 
+	// NOTE(JamLee): webhook server 需要 https
 	// CertDir is the directory that contains the server key and certificate.
 	// if not set, webhook server would look up the server key and certificate in
 	// {TempDir}/k8s-webhook-server/serving-certs. The server key and certificate
@@ -203,6 +214,7 @@ type Options struct {
 	CertDir string
 	// Functions to all for a user to customize the values that will be injected.
 
+	// NOTE(JamLee):一个 "Cache 工厂函数"
 	// NewCache is the function that will create the cache to be used
 	// by the manager. If not set this will use the default new cache function.
 	NewCache cache.NewCacheFunc
@@ -216,6 +228,7 @@ type Options struct {
 	// dryRun mode.
 	DryRunClient bool
 
+	// NOTE(JamLee): 将事件发送的 apiserver
 	// EventBroadcaster records Events emitted by the manager and sends them to the Kubernetes API
 	// Use this to customize the event correlator and spam filter
 	EventBroadcaster record.EventBroadcaster
@@ -233,6 +246,7 @@ type Options struct {
 	newHealthProbeListener func(addr string) (net.Listener, error)
 }
 
+// 返回的 client 是 controller runtime 内部的这个
 // NewClientFunc allows a user to define how to create a client
 type NewClientFunc func(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error)
 
@@ -273,6 +287,7 @@ func New(config *rest.Config, options Options) (Manager, error) {
 	// Set default values for options fields
 	options = setOptionsDefaults(options)
 
+	// NOTE(JamLee): 类型是RESTMapper
 	// Create the mapper provider
 	mapper, err := options.MapperProvider(config)
 	if err != nil {
@@ -286,11 +301,14 @@ func New(config *rest.Config, options Options) (Manager, error) {
 		return nil, err
 	}
 
+	// NOTE(JamLee): 这个 client 是 controller runtime 内部的这个 Client 不是 client-go。而且 apiReader 基本不会用到
 	apiReader, err := client.New(config, client.Options{Scheme: options.Scheme, Mapper: mapper})
 	if err != nil {
 		return nil, err
 	}
 
+	// NOTE(JamLee): 这个 client 和上面的 apiReader 是一个类型，怎么要拆分为两个对象。还多传入了一个 cache 到 writerObj 里？
+	//  writerObj, 读写分离的 obj
 	writeObj, err := options.NewClient(cache, config, client.Options{Scheme: options.Scheme, Mapper: mapper})
 	if err != nil {
 		return nil, err
@@ -342,21 +360,27 @@ func New(config *rest.Config, options Options) (Manager, error) {
 	stop := make(chan struct{})
 
 	return &controllerManager{
-		config:                  config,
-		scheme:                  options.Scheme,
-		cache:                   cache,
-		fieldIndexes:            cache,
-		client:                  writeObj,
-		apiReader:               apiReader,
-		recorderProvider:        recorderProvider,
-		resourceLock:            resourceLock,
-		mapper:                  mapper,
-		metricsListener:         metricsListener,
-		metricsExtraHandlers:    metricsExtraHandlers,
-		logger:                  options.Logger,
-		internalStop:            stop,
-		internalStopper:         stop,
-		elected:                 make(chan struct{}),
+		config:       config,
+		scheme:       options.Scheme,
+		cache:        cache,
+		fieldIndexes: cache,
+
+		// NOTE(JamLee): 都是 client， 但是 writeObj 是 DelegatingClient
+		client:    writeObj,
+		apiReader: apiReader,
+
+		recorderProvider:     recorderProvider,
+		resourceLock:         resourceLock,
+		mapper:               mapper,
+		metricsListener:      metricsListener,
+		metricsExtraHandlers: metricsExtraHandlers,
+		logger:               options.Logger,
+		internalStop:         stop,
+		internalStopper:      stop,
+
+		// NOTE(JamLee): manager 可以选举
+		elected: make(chan struct{}),
+
 		port:                    options.Port,
 		host:                    options.Host,
 		certDir:                 options.CertDir,
@@ -370,6 +394,7 @@ func New(config *rest.Config, options Options) (Manager, error) {
 	}, nil
 }
 
+// NOTE(JamLee): 这里用了 cache, 创建了 writeObj, reader 被代理了。
 // DefaultNewClient creates the default caching client
 func DefaultNewClient(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
 	// Create the Client for Write operations.
@@ -378,9 +403,11 @@ func DefaultNewClient(cache cache.Cache, config *rest.Config, options client.Opt
 		return nil, err
 	}
 
+	// Question(JamLee): 代理客户端，这里干吗要代理一层呢？
+	//  为了形成一个 "读写分离" 的 client
 	return &client.DelegatingClient{
 		Reader: &client.DelegatingReader{
-			CacheReader:  cache,
+			CacheReader:  cache, // NOTE(JamLee): informerCache，处理结构化和非结构化
 			ClientReader: c,
 		},
 		Writer:       c,
@@ -419,6 +446,7 @@ func setOptionsDefaults(options Options) Options {
 		options.NewClient = DefaultNewClient
 	}
 
+	// NOTE(JamLee): 类型是 informerCache
 	// Allow newCache to be mocked
 	if options.NewCache == nil {
 		options.NewCache = cache.New

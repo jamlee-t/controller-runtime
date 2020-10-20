@@ -91,6 +91,7 @@ func CacheTest(createCacheFunc func(config *rest.Config, opts cache.Options) (ca
 			knownPod4     runtime.Object
 		)
 
+		// NOTE(JamLee): 创建三个命名空间，并在里面创建
 		BeforeEach(func() {
 			stop = make(chan struct{})
 			Expect(cfg).NotTo(BeNil())

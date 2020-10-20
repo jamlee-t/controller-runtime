@@ -45,6 +45,7 @@ func (*ErrCacheNotStarted) Error() string {
 	return "the cache is not started, can not read objects"
 }
 
+// NOTE(JamLee): informerCache 又包一层, 这能干吗用呢
 // informerCache is a Kubernetes Object cache populated from InformersMap.  informerCache wraps an InformersMap.
 type informerCache struct {
 	*internal.InformersMap

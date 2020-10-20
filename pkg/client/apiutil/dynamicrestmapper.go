@@ -51,6 +51,24 @@ func DelayIfRateLimited(err error) (time.Duration, bool) {
 	return 0, false
 }
 
+// QUESTION(JamLee): 根据这个结构体形成 Mapper, 什么叫映射呢?
+//  资源类型可由组，版本和资源（简称GVR）的元组唯一标识。同样，可以通过组，版本和种类（简称GVK）的元组唯一地标识一种种类。
+//  --
+//  标题：GVK 和 GVR 映射
+//  GVR用于撰写REST API请求。例如，针对应用程序v1部署的REST API请求如下所示：
+//  GET /apis/apps/v1/namespaces/{namespace}/deployments/{name}
+//  通过读取资源的JSON或YAML，可以获得该资源的GVK。如果GVK和GVR之间存在映射，则可以发送从YAML读取的资源的REST API请求。这种映射称为REST映射。
+//  使用k8s.io/client-go的dynamic client的示例 - iyacontrol的文章 - 知乎 https://zhuanlan.zhihu.com/p/165970638
+//  --
+//  标题：什么是 GVK 和 GVR？
+//  在 Kubernetes 中要想完成一个 CRD，需要指定 group/kind 和 version，这个在 Kubernetes 的 API Server 中简称为 GVK。GVK 是定位一种类型的
+//  方式，例如，daemonsets 就是 Kubernetes 中的一种资源，当我们跟 Kubernetes 说我想要创建一个 daemonsets 的时候，kubectl 是如何知道该怎么向
+//  API Server 发送呢？是所有的不同资源都发向同一个 URL，还是每种资源都是不同的？
+//  GVK: Group Version Kind
+//  GVR: Group Resource, Kind 是对象的类型, Resource 是对象。例如 'scale', 'deployments/scale'。所以我认为 GVK 一对多 GVR
+//  当我们要定义一个 GVR 的时候，那么怎么知道这个 GVR 是属于哪个 GVK 的呢？也就是前面说的，kubectl 是如何从 YAML 描述文件中知道该请求的是哪个 GVR URL？
+//  这就是 REST Mapping 的功能，REST Mapping 可以指定一个 GVR（例如 daemonset 的这个例子），然后它返回对应的 GVK 以及支持的操作等。
+//  例如: https://200.200.200.160:6443/apis/apps/v1/namespaces/default/deployments/mysql-exporter-prometheus-mysql-exporter/scale
 // dynamicRESTMapper is a RESTMapper that dynamically discovers resource
 // types at runtime.
 type dynamicRESTMapper struct {
