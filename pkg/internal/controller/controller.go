@@ -114,7 +114,7 @@ func (c *Controller) Watch(src source.Source, evthdler handler.EventHandler, prc
 		}
 	}
 
-	// Start 之后才能调用 Watch
+	// NOTE(JamLee): Start 之后才能调用 Watch
 	// Controller hasn't started yet, store the watches locally and return.
 	//
 	// These watches are going to be held on the controller struct until the manager or user calls Start(...).
@@ -133,7 +133,7 @@ func (c *Controller) Start(stop <-chan struct{}) error {
 	// but lock outside to get proper handling of the queue shutdown
 	c.mu.Lock()
 
-	// 创建出来 queue
+	// NOTE(JamLee): 创建出来 queue
 	c.Queue = c.MakeQueue()
 	defer c.Queue.ShutDown() // needs to be outside the iife so that we shutdown after the stop channel is closed
 
@@ -143,7 +143,7 @@ func (c *Controller) Start(stop <-chan struct{}) error {
 		// TODO(pwittrock): Reconsider HandleCrash
 		defer utilruntime.HandleCrash()
 
-		// 将 watch 中的 source 全部都启动
+		// NOTE(JamLee): 将 watch 中的 source 全部都启动
 		// NB(directxman12): launch the sources *before* trying to wait for the
 		// caches to sync so that they have a chance to register their intendeded
 		// caches.
@@ -157,6 +157,7 @@ func (c *Controller) Start(stop <-chan struct{}) error {
 		// Start the SharedIndexInformer factories to begin populating the SharedIndexInformer caches
 		c.Log.Info("Starting Controller")
 
+		// NOTE(JamLee): 每个 Watch(里面包含了 Source 都同步起来)
 		for _, watch := range c.startWatches {
 			syncingSource, ok := watch.src.(source.SyncingSource)
 			if !ok {
@@ -171,7 +172,7 @@ func (c *Controller) Start(stop <-chan struct{}) error {
 			}
 		}
 
-		// 将已经启动的 Watches 清空掉
+		//  NOTE(JamLee): 将已经启动的 Watches 清空掉
 		// All the watches have been started, we can reset the local slice.
 		//
 		// We should never hold watches more than necessary, each watch source can hold a backing cache,

@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllertest"
 )
 
+// NOTE(JamLee): 在编译期就能确定接口实现性
 var _ cache.Cache = &FakeInformers{}
 
 // FakeInformers is a fake implementation of Informers
@@ -79,6 +80,7 @@ func (c *FakeInformers) GetInformer(ctx context.Context, obj runtime.Object) (ca
 	return c.informerFor(gvk, obj)
 }
 
+// NOTE(JamLee): 假的 Informers, 总是返回 true， 真的在 pkg/cache/internal/deleg_map.go:69
 // WaitForCacheSync implements Informers
 func (c *FakeInformers) WaitForCacheSync(stop <-chan struct{}) bool {
 	if c.Synced == nil {
@@ -87,6 +89,7 @@ func (c *FakeInformers) WaitForCacheSync(stop <-chan struct{}) bool {
 	return *c.Synced
 }
 
+// NOTE(JamLee): 创建一个假的 Informer
 // FakeInformerFor implements Informers
 func (c *FakeInformers) FakeInformerFor(obj runtime.Object) (*controllertest.FakeInformer, error) {
 	if c.Scheme == nil {
@@ -116,6 +119,7 @@ func (c *FakeInformers) informerFor(gvk schema.GroupVersionKind, _ runtime.Objec
 		return informer, nil
 	}
 
+	// NOTE(JamLee): 模拟过informer要缓存起来，免得下次再建对象
 	c.InformersByGVK[gvk] = &controllertest.FakeInformer{}
 	return c.InformersByGVK[gvk], nil
 }

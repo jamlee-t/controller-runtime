@@ -42,6 +42,7 @@ var _ = Describe("Source", func() {
 		var ic *informertest.FakeInformers
 
 		BeforeEach(func(done Done) {
+			// NOTE(JamLee): 真的 cache 是 informer cache
 			ic = &informertest.FakeInformers{}
 			c = make(chan struct{})
 			p = &corev1.Pod{
@@ -65,10 +66,13 @@ var _ = Describe("Source", func() {
 					},
 				}
 
+				// NOTE(JamLee): 创建一个 wokerqueue, 事件先到 source 里再到 workerqueue 里
 				q := workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "test")
 				instance := &source.Kind{
 					Type: &corev1.Pod{},
 				}
+
+				// NOTE(JamLee): 把 ic 放到 instance 的 cache 字段，source 接受到事件后。再入队到 workerqueue
 				Expect(inject.CacheInto(ic, instance)).To(BeTrue())
 				err := instance.Start(handler.Funcs{
 					CreateFunc: func(evt event.CreateEvent, q2 workqueue.RateLimitingInterface) {
@@ -93,9 +97,11 @@ var _ = Describe("Source", func() {
 				}, q)
 				Expect(err).NotTo(HaveOccurred())
 
+				// NOTE(JamLee): 事件模拟创建, 先获取一个 Informer， 然后在 Informer中加事件
 				i, err := ic.FakeInformerFor(&corev1.Pod{})
 				Expect(err).NotTo(HaveOccurred())
 
+				// NOTE(JamLee): FakeInformer实现了 SharedIndexInformer 接口，但是 Add 方法不属于它
 				i.Add(p)
 				<-c
 				close(done)

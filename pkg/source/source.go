@@ -42,6 +42,7 @@ const (
 	defaultBufferSize = 1024
 )
 
+// NOTE(JamLee): 分为两种类型 Kind（内部用） 和 Channel（外部webhook）。Cache 比 source 更加底层
 // Source is a source of events (eh.g. Create, Update, Delete operations on Kubernetes Objects, Webhook callbacks, etc)
 // which should be processed by event.EventHandlers to enqueue reconcile.Requests.
 //
@@ -89,6 +90,7 @@ type Kind struct {
 	// Type is the type of object to watch.  e.g. &v1.Pod{}
 	Type runtime.Object
 
+	// NOTE(JamLee): 就是存储 Informers 的地方，我猜测每个source可能都是用的同一个
 	// cache used to watch APIs
 	cache cache.Cache
 }
@@ -110,6 +112,7 @@ func (ks *Kind) Start(handler handler.EventHandler, queue workqueue.RateLimiting
 		return fmt.Errorf("must call CacheInto on Kind before calling Start")
 	}
 
+	// NOTE(JamLee): Source start 就是缓存 informer
 	// Lookup the Informer from the Cache and add an EventHandler which populates the Queue
 	i, err := ks.cache.GetInformer(context.TODO(), ks.Type)
 	if err != nil {
@@ -119,6 +122,8 @@ func (ks *Kind) Start(handler handler.EventHandler, queue workqueue.RateLimiting
 		}
 		return err
 	}
+
+	// NOTE(JamLee): 给source加上event handler
 	i.AddEventHandler(internal.EventHandler{Queue: queue, EventHandler: handler, Predicates: prct})
 	return nil
 }
@@ -130,6 +135,7 @@ func (ks *Kind) String() string {
 	return fmt.Sprintf("kind source: unknown GVK")
 }
 
+// NOTE(JamLee): list-watch 需要等待 list 完毕之后再 watch
 // WaitForSync implements SyncingSource to allow controllers to wait with starting
 // workers until the cache is synced.
 func (ks *Kind) WaitForSync(stop <-chan struct{}) error {
@@ -142,6 +148,7 @@ func (ks *Kind) WaitForSync(stop <-chan struct{}) error {
 
 var _ inject.Cache = &Kind{}
 
+// NOTE(JamLee): 对 Cache 接口的实现
 // InjectCache is internal should be called only by the Controller.  InjectCache is used to inject
 // the Cache dependency initialized by the ControllerManager.
 func (ks *Kind) InjectCache(c cache.Cache) error {

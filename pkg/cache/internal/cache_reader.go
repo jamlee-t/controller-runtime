@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+// NOTE(JamLee): 实现了 client-go 的 Reader
 // CacheReader is a client.Reader
 var _ client.Reader = &CacheReader{}
 

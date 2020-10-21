@@ -35,17 +35,19 @@ import (
 
 var log = logf.RuntimeLog.WithName("object-cache")
 
+// NOTE(JamLee): Cache 接口 本身也是 informer 管理者
 // Cache knows how to load Kubernetes objects, fetch informers to request
 // to receive events for Kubernetes objects (at a low-level),
 // and add indices to fields on the objects stored in the cache.
 type Cache interface {
-	// Cache acts as a client to objects stored in the cache.
+	// Cache acts as aCache client to objects stored in the cache.
 	client.Reader
 
 	// Cache loads informers and adds field indices.
 	Informers
 }
 
+// NOTE(JamLee): 多个 informer的管理者
 // Informers knows how to create or fetch informers for different
 // group-version-kinds, and add indices to those informers.  It's safe to call
 // GetInformer from multiple threads.
@@ -62,10 +64,12 @@ type Informers interface {
 	// It blocks.
 	Start(stopCh <-chan struct{}) error
 
+	// NOTE(JamLee): 等待所有的 informer 完成
 	// WaitForCacheSync waits for all the caches to sync.  Returns false if it could not sync a cache.
 	WaitForCacheSync(stop <-chan struct{}) bool
 
-	// NOTE(JamLee): caches 和 informer 难道指的都是 informer
+	// QUESTION(JamLee): caches 和 informer 难道指的都是 informer ？
+	//  是的。caches 和 informers 指就是 informers 的管理者
 	// Informers knows how to add indices to the caches (informers) that it manages.
 	client.FieldIndexer
 }

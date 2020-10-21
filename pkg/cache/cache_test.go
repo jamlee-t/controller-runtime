@@ -91,7 +91,7 @@ func CacheTest(createCacheFunc func(config *rest.Config, opts cache.Options) (ca
 			knownPod4     runtime.Object
 		)
 
-		// NOTE(JamLee): 创建三个命名空间，并在里面创建
+		// NOTE(JamLee): 创建三个命名空间，并在第一空间建一个pod，第二空间建两个pod，第三空间建一个pod
 		BeforeEach(func() {
 			stop = make(chan struct{})
 			Expect(cfg).NotTo(BeNil())
@@ -118,11 +118,12 @@ func CacheTest(createCacheFunc func(config *rest.Config, opts cache.Options) (ca
 			knownPod2.GetObjectKind().SetGroupVersionKind(podGVK)
 			knownPod3.GetObjectKind().SetGroupVersionKind(podGVK)
 			knownPod4.GetObjectKind().SetGroupVersionKind(podGVK)
-
 			By("creating the informer cache")
 			informerCache, err = createCacheFunc(cfg, cache.Options{})
 			Expect(err).NotTo(HaveOccurred())
 			By("running the cache and waiting for it to sync")
+
+			// NOTE(JamLee): 在另一个线程中启动 informerCache
 			// pass as an arg so that we don't race between close and re-assign
 			go func(stopCh chan struct{}) {
 				defer GinkgoRecover()
@@ -497,6 +498,7 @@ func CacheTest(createCacheFunc func(config *rest.Config, opts cache.Options) (ca
 							},
 						},
 					}
+					// NOTE(JamLee): 在 get 的时候会 cache 吗
 					sii, err := informerCache.GetInformer(context.TODO(), pod)
 					Expect(err).NotTo(HaveOccurred())
 					Expect(sii).NotTo(BeNil())
@@ -567,6 +569,8 @@ func CacheTest(createCacheFunc func(config *rest.Config, opts cache.Options) (ca
 
 					By("indexing the restartPolicy field of the Pod object before starting")
 					pod := &kcorev1.Pod{}
+
+					// NOTE(JamLee): spec.restartPolicy 这个字符串和方法关联起来了
 					indexFunc := func(obj runtime.Object) []string {
 						return []string{string(obj.(*kcorev1.Pod).Spec.RestartPolicy)}
 					}
@@ -581,6 +585,8 @@ func CacheTest(createCacheFunc func(config *rest.Config, opts cache.Options) (ca
 
 					By("listing Pods with restartPolicyOnFailure")
 					listObj := &kcorev1.PodList{}
+
+					// NOTE(JamLee): 看到了 spec.restartPolicy
 					Expect(informer.List(context.Background(), listObj,
 						client.MatchingFields{"spec.restartPolicy": "OnFailure"})).To(Succeed())
 					By("verifying that the returned pods have correct restart policy")

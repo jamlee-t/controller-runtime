@@ -191,6 +191,7 @@ func (ip *specificInformersMap) Get(ctx context.Context, gvk schema.GroupVersion
 	return started, i, nil
 }
 
+// NOTE(JamLee): Get 的时候没有找到 就用这个方法加
 func (ip *specificInformersMap) addInformerToMap(gvk schema.GroupVersionKind, obj runtime.Object) (*MapEntry, bool, error) {
 	ip.mu.Lock()
 	defer ip.mu.Unlock()
@@ -211,6 +212,8 @@ func (ip *specificInformersMap) addInformerToMap(gvk schema.GroupVersionKind, ob
 	ni := cache.NewSharedIndexInformer(lw, obj, resyncPeriod(ip.resync)(), cache.Indexers{
 		cache.NamespaceIndex: cache.MetaNamespaceIndexFunc,
 	})
+
+	// NOTE(JamLee): 这里有个 informer 能明白， 有个 Reader 的用途是什么呢
 	i := &MapEntry{
 		Informer: ni,
 		Reader:   CacheReader{indexer: ni.GetIndexer(), groupVersionKind: gvk},

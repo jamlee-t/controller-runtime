@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+// NOTE(JamLee): 验证FakeInformer实现了 SharedIndexInformer 接口。
 var _ cache.SharedIndexInformer = &FakeInformer{}
 
 // FakeInformer provides fake Informer functionality for testing

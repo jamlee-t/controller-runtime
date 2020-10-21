@@ -64,6 +64,7 @@ func (m *InformersMap) Start(stop <-chan struct{}) error {
 	return nil
 }
 
+// NOTE(JamLee): 等待所有的 Informer 已经启动完毕开始工作
 // WaitForCacheSync waits until all the caches have been started and synced.
 func (m *InformersMap) WaitForCacheSync(stop <-chan struct{}) bool {
 	syncedFuncs := append([]cache.InformerSynced(nil), m.structured.HasSyncedFuncs()...)

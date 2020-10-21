@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
+// NOTE(JamLee): informerCache 实现了这是三个接口
 var (
 	_ Informers     = &informerCache{}
 	_ client.Reader = &informerCache{}
@@ -45,7 +46,8 @@ func (*ErrCacheNotStarted) Error() string {
 	return "the cache is not started, can not read objects"
 }
 
-// NOTE(JamLee): informerCache 又包一层, 这能干吗用呢
+// NOTE(JamLee): informerCache 又包一层, 这能干吗用呢？答案是继承部分 Informer 接口规定的方法
+//   informerCache 是 informers 管理者
 // informerCache is a Kubernetes Object cache populated from InformersMap.  informerCache wraps an InformersMap.
 type informerCache struct {
 	*internal.InformersMap
@@ -146,6 +148,7 @@ func (ip *informerCache) GetInformerForKind(ctx context.Context, gvk schema.Grou
 	return i.Informer, err
 }
 
+// NOTE(JamLee): 调用底层 get 然后 返回一个 mapEntry。mapEntry 里有 Informer
 // GetInformer returns the informer for the obj
 func (ip *informerCache) GetInformer(ctx context.Context, obj runtime.Object) (Informer, error) {
 	gvk, err := apiutil.GVKForObject(obj, ip.Scheme)
@@ -172,6 +175,7 @@ func (ip *informerCache) NeedLeaderElection() bool {
 // The values may be anything.  They will automatically be prefixed with the namespace of the
 // given object, if present.  The objects passed are guaranteed to be objects of the correct type.
 func (ip *informerCache) IndexField(ctx context.Context, obj runtime.Object, field string, extractValue client.IndexerFunc) error {
+	// NOTE(JamLee): 直接拿到 informer
 	informer, err := ip.GetInformer(ctx, obj)
 	if err != nil {
 		return err
@@ -179,6 +183,7 @@ func (ip *informerCache) IndexField(ctx context.Context, obj runtime.Object, fie
 	return indexByField(informer, field, extractValue)
 }
 
+// NOTE(JamLee): 给 SharedIndexInformer 添加 index
 func indexByField(indexer Informer, field string, extractor client.IndexerFunc) error {
 	indexFunc := func(objRaw interface{}) ([]string, error) {
 		// TODO(directxman12): check if this is the correct type?
