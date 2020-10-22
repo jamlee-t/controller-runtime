@@ -203,7 +203,7 @@ func (ip *specificInformersMap) addInformerToMap(gvk schema.GroupVersionKind, ob
 		return i, ip.started, nil
 	}
 
-	// NOTE(JamLee): 这里用的是 client-go 的 RESTClient
+	// NOTE(JamLee): 这里用的是 client-go 的 RESTClient, ListWatch 是 informer 的入参
 	// Create a NewSharedIndexInformer and add it to the map.
 	var lw *cache.ListWatch
 	lw, err := ip.createListWatcher(gvk, ip)

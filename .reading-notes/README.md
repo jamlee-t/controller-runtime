@@ -33,6 +33,8 @@ func (obj *TypeMeta) GetObjectKind() schema.ObjectKind { return obj }
 ```
 系统里有 Config, ApiReader, Scheme, RestMapper, Cache, StopChannel, Logger, Injector 这些核心的对象。
 
+controller-runtime 里对 informer 也进行一层封装，形成了 多个informer 管理端。做为读取缓存时，informersCache 中的对应一类资源的 cache 定位出来。根据 gvk 定位到  mapEntry, mapEntry 里有 cache。
+
 ## client 包
 client 封装 client-go 的 rest.RESTClient. 底层还是用这个 rest.RESTClient 发送的请求。
 
