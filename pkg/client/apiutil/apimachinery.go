@@ -85,7 +85,7 @@ func RESTClientForGVK(gvk schema.GroupVersionKind, baseConfig *rest.Config, code
 func createRestConfig(gvk schema.GroupVersionKind, baseConfig *rest.Config) *rest.Config {
 	gv := gvk.GroupVersion()
 
-	// NOTE(JamLee): rest 来自 client-go,
+	// NOTE(JamLee): rest 来自 client-go, 从基础配置中拷呗 然后设置 GroupVersion
 	cfg := rest.CopyConfig(baseConfig)
 	cfg.GroupVersion = &gv
 

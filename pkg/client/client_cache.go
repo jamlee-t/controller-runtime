@@ -29,7 +29,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
-// NOTE(JamLee): 这里并不是缓存结果而是缓存 restclient。 这里会和 clientset 功能类似吗，算是对 clientset 的功能优化
+// NOTE(JamLee): 这里并不是缓存结果而是缓存 restclient。 这里会和 clientset 功能类似吗，算是对 clientset 的功能优化。每一个 groupVersion 一个客户端（不是Kind哦）。
+//  unstructureed 和 typed 使用的 client 是一样的
 // clientCache creates and caches rest clients and metadata for Kubernetes types
 type clientCache struct {
 	// config is the rest.Config to talk to an apiserver
@@ -49,7 +50,7 @@ type clientCache struct {
 	mu             sync.RWMutex
 }
 
-// NOTE(JamLee): 根据 groupVersion 创建出来 Resource, 这里的 Resource其实就是 RestClient
+// NOTE(JamLee): 根据 groupVersion 创建出来 Resource, 这里的 Resource其实就是 RestClient (client-go)
 // newResource maps obj to a Kubernetes Resource and constructs a client for that Resource.
 // If the object is a list, the resource represents the item's type instead.
 func (c *clientCache) newResource(gvk schema.GroupVersionKind, isList bool) (*resourceMeta, error) {

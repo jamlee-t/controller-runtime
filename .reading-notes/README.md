@@ -7,7 +7,7 @@ restmapper: gvk 到 gvr 的映射。
 `Manager` 组织了 `Controller`, `Controller` 组织了 `Reconciler`, `Source` 。 `Source` 中包含了 `cache`。 
 `controller-runtime` 中重新实现了 `client`. `cache` 被设置到 `client` 中。 `client` 被设置到 manager 中，多个 controller 共享这个 client。 
 
-核心参与者包含的关系:  
+client 包含的关系:  
 ```
 client > informer > listwatch
 ```
@@ -31,6 +31,10 @@ runtime.Object 的秘密在于：
 // /Users/jamlee/go/pkg/mod/k8s.io/apimachinery@v0.18.6/pkg/apis/meta/v1/meta.go:119
 func (obj *TypeMeta) GetObjectKind() schema.ObjectKind { return obj }
 ```
+系统里有 Config, ApiReader, Scheme, RestMapper, Cache, StopChannel, Logger, Injector 这些核心的对象。
+
+## client 包
+client 封装 client-go 的 rest.RESTClient. 底层还是用这个 rest.RESTClient 发送的请求。
 
 ## 单元测试
 Ginkgo是一个BDD风格的Go测试框架，旨在帮助你有效地编写富有表现力的全方位测试。它最好与Gomega匹配器库配对使用，但它的设计是与匹配器无关的。

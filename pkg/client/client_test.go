@@ -311,6 +311,7 @@ var _ = Describe("Client", func() {
 					Version: "v1",
 				})
 
+				// NOTE(JamLee): client 可以不用区分 client 是否是 struct 了
 				By("creating the object")
 				err = cl.Create(context.TODO(), u)
 				Expect(err).NotTo(HaveOccurred())
