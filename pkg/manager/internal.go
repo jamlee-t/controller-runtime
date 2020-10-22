@@ -59,6 +59,7 @@ const (
 
 var log = logf.RuntimeLog.WithName("manager")
 
+// NOTE(JamLee): 系统的 mgr 实现
 type controllerManager struct {
 	// config is the rest.config used to talk to the apiserver.  Required.
 	config *rest.Config
@@ -76,6 +77,7 @@ type controllerManager struct {
 
 	cache cache.Cache
 
+	// NOTE(JamLee): controller 中的 client 不是 client-go 的 client
 	// TODO(directxman12): Provide an escape hatch to get individual indexers
 	// client is the client injected into Controllers (and EventHandlers, Sources and Predicates).
 	client client.Client
@@ -224,6 +226,7 @@ func (cm *controllerManager) Add(r Runnable) error {
 	return nil
 }
 
+// NOTE(JamLee): 向 i 中注入共享的对象。i 可能是  controller ，reconciler
 func (cm *controllerManager) SetFields(i interface{}) error {
 	if _, err := inject.ConfigInto(cm.config, i); err != nil {
 		return err

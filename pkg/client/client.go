@@ -96,6 +96,7 @@ func New(config *rest.Config, options Options) (Client, error) {
 
 var _ Client = &client{}
 
+// NOTE(JamLee): 用的 client 会被 cache 起来
 // client is a client.Client that reads and writes directly from/to an API server.  It lazily initializes
 // new clients at the time they are used, and caches the client.
 type client struct {

@@ -564,6 +564,7 @@ func CacheTest(createCacheFunc func(config *rest.Config, opts cache.Options) (ca
 
 				It("should be able to index an object field then retrieve objects by that field", func() {
 					By("creating the cache")
+					// NOTE(JamLee): 这里 informer 改名为 informerCache 更合理
 					informer, err := cache.New(cfg, cache.Options{})
 					Expect(err).NotTo(HaveOccurred())
 

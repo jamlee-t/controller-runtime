@@ -112,7 +112,7 @@ func (ks *Kind) Start(handler handler.EventHandler, queue workqueue.RateLimiting
 		return fmt.Errorf("must call CacheInto on Kind before calling Start")
 	}
 
-	// NOTE(JamLee): Source start 就是缓存 informer
+	// NOTE(JamLee): Get informer 就是会缓存 informer 的
 	// Lookup the Informer from the Cache and add an EventHandler which populates the Queue
 	i, err := ks.cache.GetInformer(context.TODO(), ks.Type)
 	if err != nil {

@@ -35,7 +35,7 @@ import (
 
 var _ inject.Injector = &Controller{}
 
-// controller.Controller 只是提供了接口，即 Controller 的 Watch，以及嵌入的 Reconcile 方法
+// NOTE(JamLee): controller.Controller 只是提供了接口，即 Controller 的 Watch，以及嵌入的 Reconcile 方法
 // Controller implements controller.Controller
 type Controller struct {
 	// Name is used to uniquely identify a Controller in tracing, logging and monitoring.  Name is required.
@@ -49,7 +49,7 @@ type Controller struct {
 	// Defaults to the DefaultReconcileFunc.
 	Do reconcile.Reconciler
 
-	// 返回一个 queue 创建函数，创建的 queue 是接下来的字段，queue 中传递的是实时发生的事件
+	// NOTE(JamLee): 返回一个 queue 创建函数，创建的 queue 是接下来的字段，queue 中传递的是实时发生的事件
 	// MakeQueue constructs the queue for this controller once the controller is ready to start.
 	// This exists because the standard Kubernetes workqueues start themselves immediately, which
 	// leads to goroutine leaks if something calls controller.New repeatedly.
@@ -73,7 +73,7 @@ type Controller struct {
 
 	// TODO(community): Consider initializing a logger with the Controller Name as the tag
 
-	// 初步推断这里应该连接着 Informer
+	// NOTE(JamLee): 初步推断这里应该连接着 Informer
 	// startWatches maintains a list of sources, handlers, and predicates to start when the controller is started.
 	startWatches []watchDescription
 
@@ -100,7 +100,7 @@ func (c *Controller) Watch(src source.Source, evthdler handler.EventHandler, prc
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// NOTE(JamLee): 这里明明是注入字段到 controller 里面，根据传入的类型进行判断应该注入到那个字段，这样就限制了任意赋值字段
+	// NOTE(JamLee): 这里明明是注入字段到 source 里面. setFields 来自于 mrg.setFields
 	// Inject Cache into arguments
 	if err := c.SetFields(src); err != nil {
 		return err
@@ -285,7 +285,7 @@ func (c *Controller) reconcileHandler(obj interface{}) bool {
 	return true
 }
 
-// 可以自己在这里重新定义 SetFields.Injector 如何工作
+// NOTE(JamLee): 可以自己在这里重新定义 SetFields.Injector，定制性controller给source注入字段。
 // InjectFunc implement SetFields.Injector
 func (c *Controller) InjectFunc(f inject.Func) error {
 	c.SetFields = f

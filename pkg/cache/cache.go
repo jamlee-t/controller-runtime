@@ -74,7 +74,7 @@ type Informers interface {
 	client.FieldIndexer
 }
 
-// NOTE(JamLee): 对 client-go 的 informer 又包了一层 informer
+// NOTE(JamLee): 对 client-go 的 informer 又包了一层 informer 接口，用于访问底层的 Informer
 // Informer - informer allows you interact with the underlying informer
 type Informer interface {
 	// AddEventHandler adds an event handler to the shared informer using the shared informer's resync

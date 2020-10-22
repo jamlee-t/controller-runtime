@@ -53,6 +53,7 @@ type informerCache struct {
 	*internal.InformersMap
 }
 
+// NOTE(JamLee): cache 分为 reader 和 informer。这里是 reader 的实现
 // Get implements Reader
 func (ip *informerCache) Get(ctx context.Context, key client.ObjectKey, out runtime.Object) error {
 	gvk, err := apiutil.GVKForObject(out, ip.Scheme)
@@ -88,6 +89,7 @@ func (ip *informerCache) List(ctx context.Context, out runtime.Object, opts ...c
 		return &ErrCacheNotStarted{}
 	}
 
+	// NOTE(JamLee): 从 InformersMap 中获取 MapEntry
 	return cache.Reader.List(ctx, out, opts...)
 }
 

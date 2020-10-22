@@ -50,6 +50,7 @@ func main() {
 	// Setup a new controller to reconcile ReplicaSets
 	entryLog.Info("Setting up controller")
 	c, err := controller.New("foo-controller", mgr, controller.Options{
+		// NOTE(JamLee): restMapping 之类的也可以在这里设置
 		Reconciler: &reconcileReplicaSet{client: mgr.GetClient(), log: log.WithName("reconciler")},
 	})
 	if err != nil {

@@ -42,12 +42,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-// Manager 初始化共享的对象，例如 Caches 和 Client(k8s), 还有日志。功能详细列举如下:
-// 1. 支持多个manager 实例，选主形成高可用
-// 2. Config, Scheme, Client, FieldIndexer, Cache, EventRecord, RESTMapper, APIReader, WebhookServer, Logger
-//
-// 注意
-// SetFields 使用于将实现了 Inject 的结构体的对象注入进来
+// NOTE(JamLee): Manager 初始化共享的对象，例如 Caches 和 Client(k8s), 还有日志。功能详细列举如下:
+//  1. 支持多个manager 实例，选主形成高可用
+//  2. Config, Scheme, Client, FieldIndexer, Cache, EventRecord, RESTMapper, APIReader, WebhookServer, Logger
+//  \
+//  注意
+//  SetFields 使用于将实现了 Inject 的结构体的对象注入进来
 
 // Manager initializes shared dependencies such as Caches and Clients, and provides them to Runnables.
 // A Manager is required to create Controllers.
@@ -295,6 +295,7 @@ func New(config *rest.Config, options Options) (Manager, error) {
 		return nil, err
 	}
 
+	// NOTE(JamLee): 创建一个 informerCache
 	// Create the cache for the cached read client and registering informers
 	cache, err := options.NewCache(config, cache.Options{Scheme: options.Scheme, Mapper: mapper, Resync: options.SyncPeriod, Namespace: options.Namespace})
 	if err != nil {
@@ -307,8 +308,9 @@ func New(config *rest.Config, options Options) (Manager, error) {
 		return nil, err
 	}
 
-	// NOTE(JamLee): 这个 client 和上面的 apiReader 是一个类型，怎么要拆分为两个对象。还多传入了一个 cache 到 writerObj 里？
-	//  writerObj, 读写分离的 obj
+	// NOTE(JamLee): 这个 client 和上面的 apiReader 不是是一个类型，虽然都属于 client包, 一个是 apiReader 是 client， writeObj 是 DelegatingClient，
+	//  怎么要拆分为两个对象。还多传入了一个 cache 到 writerObj 里？
+	//  writerObj, 读写分离的 obj ，所有的 controller 共享这一个 cache。这里的 cache 是 reader 和 informers，所以 Source 需要它缓存 informer，读取缓存中的内容
 	writeObj, err := options.NewClient(cache, config, client.Options{Scheme: options.Scheme, Mapper: mapper})
 	if err != nil {
 		return nil, err
@@ -394,9 +396,10 @@ func New(config *rest.Config, options Options) (Manager, error) {
 	}, nil
 }
 
-// NOTE(JamLee): 这里用了 cache, 创建了 writeObj, reader 被代理了。
+// NOTE(JamLee): 这里用了 cache, 创建了 writeObj, reader 被代理了。cache 是给 client 调用的
 // DefaultNewClient creates the default caching client
 func DefaultNewClient(cache cache.Cache, config *rest.Config, options client.Options) (client.Client, error) {
+	// NOTE(JamLee): client 是 controller-runtime 自己的那个 client。所有的变量 c 都是
 	// Create the Client for Write operations.
 	c, err := client.New(config, options)
 	if err != nil {
@@ -407,9 +410,11 @@ func DefaultNewClient(cache cache.Cache, config *rest.Config, options client.Opt
 	//  为了形成一个 "读写分离" 的 client
 	return &client.DelegatingClient{
 		Reader: &client.DelegatingReader{
-			CacheReader:  cache, // NOTE(JamLee): informerCache，处理结构化和非结构化
+			// NOTE(JamLee): informerCache，处理结构化和非结构化。这里缓存了 informer
+			CacheReader:  cache,
 			ClientReader: c,
 		},
+		// NOTE(JamLee): c 是缓存了 client, 每类资源一个 client
 		Writer:       c,
 		StatusClient: c,
 	}, nil

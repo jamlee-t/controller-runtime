@@ -203,6 +203,7 @@ func (ip *specificInformersMap) addInformerToMap(gvk schema.GroupVersionKind, ob
 		return i, ip.started, nil
 	}
 
+	// NOTE(JamLee): 这里用的是 client-go 的 RESTClient
 	// Create a NewSharedIndexInformer and add it to the map.
 	var lw *cache.ListWatch
 	lw, err := ip.createListWatcher(gvk, ip)
@@ -213,7 +214,8 @@ func (ip *specificInformersMap) addInformerToMap(gvk schema.GroupVersionKind, ob
 		cache.NamespaceIndex: cache.MetaNamespaceIndexFunc,
 	})
 
-	// NOTE(JamLee): 这里有个 informer 能明白， 有个 Reader 的用途是什么呢
+	// QUESTION(JamLee): 这里有个 informer 能明白， 有个 Reader 的用途是什么呢？
+	//  答案是操作 informer 里的 indexer 的工具方法，
 	i := &MapEntry{
 		Informer: ni,
 		Reader:   CacheReader{indexer: ni.GetIndexer(), groupVersionKind: gvk},
@@ -229,6 +231,7 @@ func (ip *specificInformersMap) addInformerToMap(gvk schema.GroupVersionKind, ob
 	return i, ip.started, nil
 }
 
+// NOTE(JamLee): ListWatch 是创建 Informer 的参数
 // newListWatch returns a new ListWatch object that can be used to create a SharedIndexInformer.
 func createStructuredListWatch(gvk schema.GroupVersionKind, ip *specificInformersMap) (*cache.ListWatch, error) {
 	// Kubernetes APIs work against Resources, not GroupVersionKinds.  Map the
@@ -238,6 +241,7 @@ func createStructuredListWatch(gvk schema.GroupVersionKind, ip *specificInformer
 		return nil, err
 	}
 
+	// NOTE(JamLee): 这里又用到了 client-go 中的 client
 	client, err := apiutil.RESTClientForGVK(gvk, ip.config, ip.codecs)
 	if err != nil {
 		return nil, err

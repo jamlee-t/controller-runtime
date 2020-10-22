@@ -32,10 +32,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// NOTE(JamLee): 实现了 client-go 的 Reader
+// NOTE(JamLee): 实现了 controller runtime 里的 client 的 Reader
 // CacheReader is a client.Reader
 var _ client.Reader = &CacheReader{}
 
+// NOTE(JamLee): CacheReader 由 Indexer 和 gvk 组成。每类对象例如 pod， 对应一个 informer 和 这个 cacheReader
 // CacheReader wraps a cache.Index to implement the client.CacheReader interface for a single type
 type CacheReader struct {
 	// indexer is the underlying indexer wrapped by this cache.

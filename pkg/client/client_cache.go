@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
+// NOTE(JamLee): 这里并不是缓存结果而是缓存 restclient。 这里会和 clientset 功能类似吗，算是对 clientset 的功能优化
 // clientCache creates and caches rest clients and metadata for Kubernetes types
 type clientCache struct {
 	// config is the rest.Config to talk to an apiserver
@@ -57,12 +58,14 @@ func (c *clientCache) newResource(gvk schema.GroupVersionKind, isList bool) (*re
 		gvk.Kind = gvk.Kind[:len(gvk.Kind)-4]
 	}
 
-	// NOTE(JamLee): 创建真正的 restclient, 在这里应该能知道是如何访问 kube-apiserver
+	// NOTE(JamLee): 创建client-go 的 restclient, 在这里应该能知道是如何访问 kube-apiserver
 	client, err := apiutil.RESTClientForGVK(gvk, c.config, c.codecs)
 	if err != nil {
 		return nil, err
 	}
-	// NOTE(JamLee): gvk 的 Kind 和 Version 映射起来。其实就是 GVK 和 GVR 的转换。为什么不直接把 kind 首字母变小呢？
+
+	// NOTE(JamLee): gvk 的 Kind 和 Version 映射起来。其实就是 GVK 和 GVR 的转换。为什么不直接把 kind 首字母变小呢？mapping 其实也是
+	//  一个类型
 	mapping, err := c.mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		return nil, err
@@ -104,7 +107,7 @@ func (c *clientCache) getResource(obj runtime.Object) (*resourceMeta, error) {
 // NOTE(JamLee): getObjMeta 会得到一个对象。包含 type and object 信息
 // getObjMeta returns objMeta containing both type and object metadata and state
 func (c *clientCache) getObjMeta(obj runtime.Object) (*objMeta, error) {
-	// NOTE(JamLee): 这里会获得 rest 对象
+	// NOTE(JamLee): 这里会获得 rest 对象 (client-go的rest对象)
 	r, err := c.getResource(obj)
 	if err != nil {
 		return nil, err
@@ -116,6 +119,7 @@ func (c *clientCache) getObjMeta(obj runtime.Object) (*objMeta, error) {
 	return &objMeta{resourceMeta: r, Object: m}, err
 }
 
+// NOTE(JamLee): 缓存时，这是被缓存对象的表示
 // resourceMeta caches state for a Kubernetes type.
 type resourceMeta struct {
 	// NOTE(JamLee): client-go 中 RESTClient 的结构体对应的
